@@ -1,0 +1,448 @@
+<!--
+  AI Transparency Tracker v0.2
+  Copyright (C) 2026 Tito Ambyo and Janak Rogers, RMIT University
+
+  SOFTWARE LICENCE (GNU GPLv3)
+  ────────────────────────────
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+  AI TRANSPARENCY LABEL SYSTEM LICENCE (CC BY-SA 4.0)
+  ────────────────────────────────────────────────────
+  The AI Transparency Label taxonomy (AI-0, AI-R, AI-RO, AI-RD, AI-RP,
+  AI-IRODP, and all composable combinations of the I·R·O·D·P stage
+  framework) is licensed separately under the Creative Commons
+  Attribution-ShareAlike 4.0 International License.
+
+  You are free to use, adapt, and implement the label system in your
+  own tools, publications, and newsroom policies, provided you give
+  appropriate credit and distribute any adaptations under the same
+  or a compatible licence.
+
+  Full licence: https://creativecommons.org/licenses/by-sa/4.0/
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Transparency Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=JetBrains+Mono:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #faf8f4; --surface: #f0ece4; --border: #d4cfc5;
+    --text: #2c2a25; --text-muted: #8a8578;
+    --accent: #c1121f; --accent-bg: #fff0f0;
+    --green: #2d6a4f; --green-bg: #d8f3dc; --green-dark: #1b4332;
+    --dark: #2c2a25; --light: #faf8f4; --chip-hover: #e8e4dc;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1916; --surface: #252320; --border: #3d3a34;
+      --text: #e8e4dc; --text-muted: #8a8578;
+      --accent: #e63946; --accent-bg: #2a1a1a;
+      --green: #52b788; --green-bg: #1a2e22; --green-dark: #95d5b2;
+      --dark: #e8e4dc; --light: #1a1916; --chip-hover: #3d3a34;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Source Serif 4', Georgia, serif; background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .app { max-width: 780px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  .masthead { border-bottom: 3px double var(--border); padding-bottom: 16px; margin-bottom: 36px; display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  .masthead h1 { font-family: 'Instrument Serif', Georgia, serif; font-size: 1.8rem; font-weight: 400; letter-spacing: -0.01em; line-height: 1.2; }
+  .tagline { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-muted); margin-top: 6px; }
+
+  .mono-sm { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-muted); font-weight: 600; }
+
+  .badge { display: inline-block; font-family: 'JetBrains Mono', monospace; font-weight: 700; letter-spacing: 0.1em; border-radius: 4px; border: 2px solid; white-space: nowrap; }
+  .badge-zero { border-color: var(--green); background: var(--green-bg); color: var(--green-dark); }
+  .badge-active { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+  .badge-sm { font-size: 0.7rem; padding: 3px 8px; }
+  .badge-md { font-size: 0.9rem; padding: 5px 12px; }
+  .badge-lg { font-size: 1.4rem; padding: 10px 20px; letter-spacing: 0.15em; }
+
+  .dots { display: flex; gap: 3px; }
+  .dot { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 3px; font-size: 0.7rem; font-family: 'JetBrains Mono', monospace; font-weight: 700; transition: all 0.2s; }
+  .dot-off { background: var(--surface); color: var(--text-muted); }
+  .dot-on { background: var(--accent); color: #fff; }
+
+  .chip-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chip { padding: 7px 14px; border: 1px solid var(--border); border-radius: 20px; background: transparent; font-family: 'Source Serif 4', Georgia, serif; font-size: 0.8rem; color: var(--text); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+  .chip:hover { background: var(--chip-hover); border-color: var(--text-muted); }
+  .chip.selected { background: var(--dark); color: var(--light); border-color: var(--dark); }
+
+  .assess-grid { display: grid; grid-template-columns: 120px repeat(5, 1fr); gap: 0; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; font-size: 0.75rem; margin-bottom: 16px; }
+  .assess-cell { padding: 10px 8px; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); display: flex; align-items: center; justify-content: center; text-align: center; min-height: 48px; }
+  .assess-cell:last-child { border-right: none; }
+  .assess-cell.row-label { justify-content: flex-start; font-weight: 600; font-family: 'Source Serif 4', Georgia, serif; background: var(--surface); padding-left: 12px; font-size: 0.8rem; }
+  .assess-cell.col-header { background: var(--surface); font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; color: var(--text-muted); min-height: 40px; }
+  .assess-cell.last-row { border-bottom: none; }
+  .assess-radio { width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent); }
+  .assess-mobile { display: none; }
+  .assess-mobile-stage { margin-bottom: 16px; padding: 12px 16px; background: var(--surface); border-radius: 6px; }
+  .assess-mobile-stage .stage-label { font-weight: 600; margin-bottom: 10px; font-size: 0.9rem; }
+  .assess-mobile-option { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; font-size: 0.8rem; color: var(--text); cursor: pointer; }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+  .btn-primary { padding: 10px 20px; border: 2px solid var(--dark); background: transparent; color: var(--dark); }
+  .btn-primary:hover, .btn-primary.on { background: var(--dark); color: var(--light); }
+  .btn-secondary { padding: 10px 20px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); }
+  .btn-secondary:hover { border-color: var(--text-muted); color: var(--text); }
+  .btn-sm { padding: 5px 12px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-size: 0.7rem; }
+  .btn-sm:hover { border-color: var(--text-muted); color: var(--text); }
+  .btn-ghost { padding: 4px; border: none; background: transparent; color: var(--text-muted); opacity: 0.4; cursor: pointer; }
+  .btn-ghost:hover { opacity: 1; }
+  .btn-new { width: 100%; padding: 16px 20px; border: 2px dashed var(--border); border-radius: 6px; background: transparent; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; cursor: pointer; transition: all 0.2s; margin-bottom: 24px; display: flex; align-items: center; gap: 8px; }
+  .btn-new:hover { border-color: var(--dark); color: var(--dark); }
+  .btn-copy { display: inline-flex; align-items: center; gap: 4px; border: 1px solid rgba(255,255,255,0.3); border-radius: 3px; background: transparent; color: var(--light); cursor: pointer; padding: 4px 10px; font-size: 0.65rem; font-family: 'JetBrains Mono', monospace; }
+  .btn-copy:hover { border-color: rgba(255,255,255,0.6); }
+
+  .input, .textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.85rem; font-family: 'Source Serif 4', Georgia, serif; background: var(--bg); color: var(--text); outline: none; transition: border-color 0.15s; }
+  .input:focus, .textarea:focus { border-color: var(--text-muted); }
+  .textarea { min-height: 80px; resize: vertical; }
+  .form-label { display: block; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
+  .form-hint { font-size: 0.78rem; color: var(--text-muted); font-style: italic; margin-bottom: 8px; }
+  .title-input { width: 100%; padding: 0; border: none; border-bottom: 1px solid transparent; background: transparent; font-family: 'Instrument Serif', Georgia, serif; font-size: 1.8rem; font-weight: 400; color: var(--text); outline: none; }
+  .title-input:focus { border-bottom-color: var(--border); }
+  .title-input::placeholder { color: var(--text-muted); }
+  .meta-input { width: 100%; padding: 6px 0; border: none; border-bottom: 1px solid var(--border); font-size: 0.85rem; font-family: 'Source Serif 4', Georgia, serif; background: transparent; color: var(--text); outline: none; }
+
+  .story-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s; gap: 12px; }
+  .story-row:hover { background: var(--surface); }
+
+  .stage-section { padding-left: 20px; margin-bottom: 24px; transition: border-color 0.3s; }
+  .stage-section.has-logs { border-left: 3px solid var(--accent); }
+  .stage-section.no-logs { border-left: 3px solid var(--border); }
+
+  .log-card { background: var(--surface); border-radius: 4px; padding: 12px 16px; margin-bottom: 8px; font-size: 0.8rem; }
+  .log-tool { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; font-weight: 600; background: var(--dark); color: var(--light); padding: 2px 6px; border-radius: 3px; margin-right: 8px; white-space: nowrap; }
+  .log-form { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 20px; margin-top: 12px; }
+
+  .disclosure { margin-top: 20px; border: 2px solid var(--dark); border-radius: 6px; overflow: hidden; animation: slideIn 0.2s ease; }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+  .disclosure-head { background: var(--dark); color: var(--light); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .disclosure-body { padding: 20px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; line-height: 1.7; white-space: pre-wrap; word-break: break-word; background: var(--surface); color: var(--text); }
+
+  .about { margin-bottom: 36px; padding: 24px; background: var(--surface); border-radius: 6px; border-left: 3px solid var(--dark); }
+  .ref { margin-top: 40px; padding: 20px; border: 1px solid var(--border); border-radius: 6px; }
+  .ref-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+
+  .footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--text-muted); line-height: 1.8; letter-spacing: 0.03em; }
+  .footer a { color: var(--text-muted); }
+  .back { display: flex; align-items: center; gap: 6px; border: none; background: transparent; cursor: pointer; font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; color: var(--text-muted); padding: 0; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .back:hover { color: var(--text); }
+
+  @media (max-width: 700px) {
+    .app { padding: 24px 16px 60px; }
+    .masthead h1 { font-size: 1.4rem; }
+    .title-input { font-size: 1.3rem; }
+    .assess-grid { display: none; }
+    .assess-mobile { display: block; }
+    .story-row .dots { display: none; }
+  }
+  @media (min-width: 701px) { .assess-mobile { display: none; } }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<script>
+const STAGES=[{key:"I",name:"Idea",desc:"Finding something to report on"},{key:"R",name:"Research",desc:"Finding out stuff"},{key:"O",name:"Organise",desc:"Finding shape, focus, and gaps"},{key:"D",name:"Draft",desc:"Getting the story down"},{key:"P",name:"Polish",desc:"Revising and rewriting"}];
+const TOOLS=["ChatGPT","Claude","Gemini","Copilot","Perplexity","NotebookLM","Grammarly AI","Whisper / Transcription","Midjourney","DALL-E","Other"];
+const USAGES=["Brainstorming","Background research","Summarising sources","Data analysis","Transcription","Translation","Drafting text","Rewriting","Editing / grammar","Headlines / titles","Structuring / outlining","Fact-checking help","Source finding","Image generation","Other"];
+const LEVELS=[{key:"ai-led",name:"AI-led"},{key:"high",name:"High use"},{key:"moderate",name:"Moderate"},{key:"light",name:"Light use"},{key:"none",name:"No AI"}];
+const LDESC={
+  I:["AI generated my angles and suggested the topic","I used AI to brainstorm angles and check existing coverage","I used AI to check whether my idea had been widely reported","I used AI to search for context on my own idea","I developed my idea entirely on my own"],
+  R:["AI summarised sources, suggested experts, and shaped my questions","I used AI to summarise documents and help draft interview questions","I used AI to explain terminology and point me toward sources","I used AI to clarify one or two specific facts","I conducted all research and interviews myself"],
+  O:["AI identified structure, spotted gaps, and fact-checked for me","I used AI to identify gaps and suggest how to structure material","I used AI to organise my notes into a rough structure","I used AI to check one specific claim or date","I planned and structured the story from my own notes"],
+  D:["AI drafted the full piece from my outline or notes","I used AI to draft sections and suggest structural alternatives","I used AI to help with one section I was stuck on","I wrote the full draft, using AI only when stuck on a phrase","I wrote the full draft independently"],
+  P:["AI rewrote my draft for clarity, flow, and style throughout","I used AI to review my draft, tighten sections, and check consistency","I used AI to proofread and improve one section","I used AI for spellcheck and grammar only","I revised and proofread independently"]
+};
+
+let S={stories:[],logs:{},active:null,stage:null,showDisc:false,showAssess:false};
+function load(){try{const a=localStorage.getItem("ait2-stories"),b=localStorage.getItem("ait2-logs");if(a)S.stories=JSON.parse(a);if(b)S.logs=JSON.parse(b);}catch(e){}}
+function save(){try{localStorage.setItem("ait2-stories",JSON.stringify(S.stories));localStorage.setItem("ait2-logs",JSON.stringify(S.logs));}catch(e){}}
+function gid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function esc(s){const d=document.createElement("div");d.textContent=s||"";return d.innerHTML}
+function fmtD(iso,f){const d=new Date(iso);if(f==="short")return d.toLocaleDateString("en-AU",{day:"numeric",month:"short"});if(f==="log")return d.toLocaleString("en-AU",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});if(f==="full")return d.toLocaleDateString("en-AU",{day:"numeric",month:"long",year:"numeric"});return d.toLocaleDateString("en-AU")}
+function joinL(a){if(!a.length)return"";if(a.length===1)return a[0];if(a.length===2)return a[0]+" and "+a[1];return a.slice(0,-1).join(", ")+", and "+a[a.length-1]}
+function getLabel(logs){if(!logs||!logs.length)return"AI-0";const u=new Set(logs.map(l=>l.stage));const o=STAGES.filter(s=>u.has(s.key)).map(s=>s.key);return o.length?"AI-"+o.join(""):"AI-0"}
+function bdg(l,sz){return`<span class="badge ${l==="AI-0"?"badge-zero":"badge-active"} badge-${sz||"md"}">${esc(l)}</span>`}
+function dts(logs){const u=new Set((logs||[]).map(l=>l.stage));return`<div class="dots">${STAGES.map(s=>`<span class="dot ${u.has(s.key)?"dot-on":"dot-off"}" title="${s.name}">${s.key}</span>`).join("")}</div>`}
+
+const IC={
+  plus:`<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="3" x2="8" y2="13"/><line x1="3" y1="8" x2="13" y2="8"/></svg>`,
+  folder:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>`,
+  back:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>`,
+  trash:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>`,
+  copy:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>`,
+  dl:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`
+};
+
+function getDisclosure(story,logs){
+  if(!logs||!logs.length)return"No AI tools were used in the production of this story.";
+  const label=getLabel(logs),groups={};
+  logs.forEach(l=>{if(!groups[l.stage])groups[l.stage]=[];groups[l.stage].push(l)});
+  const toolSet=new Set();logs.forEach(l=>toolSet.add(l.tool==="Other"&&l.otherTool?l.otherTool:l.tool));
+  const toolList=Array.from(toolSet);
+  const stagesUsed=STAGES.filter(s=>groups[s.key]);
+  const stageNames=stagesUsed.map(s=>s.name.toLowerCase());
+  const author="The author";
+  let narr=`${author} used AI tools during the ${joinL(stageNames)} ${stageNames.length===1?"stage":"stages"} of producing this story.`;
+  stagesUsed.forEach(stage=>{
+    const sLogs=groups[stage.key];
+    const usages=[...new Set(sLogs.map(l=>{const t=l.usageType==="Other"&&l.otherUsage?l.otherUsage:l.usageType;return t.toLowerCase().replace(/ \/ /g," and ")}))];
+    const intents=sLogs.map(l=>l.notes).filter(n=>n&&n.trim());
+    narr+=` During ${stage.name.toLowerCase()}, AI was used for ${joinL(usages)}.`;
+    intents.forEach(i=>{let c=i.trim();c=c.charAt(0).toUpperCase()+c.slice(1);if(!/[.!?]$/.test(c))c+=".";narr+=` ${c}`;});
+  });
+  const assess=story.assessment;
+  if(assess){
+    const aStages=STAGES.filter(s=>assess[s.key]&&assess[s.key]!=="none");
+    if(aStages.length>0){
+      narr+=`\n\nIn the author\u2019s own assessment: `;
+      const parts=aStages.map(s=>{const li=LEVELS.findIndex(l=>l.key===assess[s.key]);const desc=LDESC[s.key][li];return desc.charAt(0).toLowerCase()+desc.slice(1)});
+      narr+=joinL(parts)+".";
+    }
+  }
+  narr+=`\n\nAll AI-generated outputs were reviewed and verified by the author. Human editorial judgement was applied throughout.`;
+  let d=`AI TRANSPARENCY DECLARATION [${label}]\n`+"\u2500".repeat(40)+"\n\n";
+  if(story.title)d+=story.title+"\n";
+  if(story.publication)d+=story.publication+"\n";
+  d+=fmtD(new Date().toISOString(),"full")+"\n\nHOW AI WAS USED\n\n"+narr+"\n\nTOOLS USED\n\n";
+  toolList.forEach(tool=>{
+    const ts=[];STAGES.forEach(s=>{if(groups[s.key]&&groups[s.key].some(l=>(l.tool==="Other"&&l.otherTool?l.otherTool:l.tool)===tool))ts.push(s.name)});
+    d+=`  \u2022 ${tool} \u2014 used in: ${joinL(ts)}\n`;
+  });
+  if(story.reflections&&story.reflections.trim())d+=`\nAUTHOR\u2019S REFLECTION\n\n${story.reflections.trim()}\n`;
+  return d;
+}
+
+function renderList(){
+  let h="";
+  if(!S.stories.length){
+    h+=`<div class="about">
+      <p style="margin-bottom:12px;font-size:0.95rem">Keep track of how you\u2019re using AI as you work on a story. When you\u2019re done, generate a transparency declaration and a label you can publish alongside your work.</p>
+      <p style="margin-bottom:12px;font-size:0.85rem;color:var(--text-muted)">Be honest \u2014 we want to understand how you\u2019re actually using AI, not how you think we want you to use it.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        ${bdg("AI-0","sm")} ${bdg("AI-R","sm")} ${bdg("AI-RP","sm")} ${bdg("AI-RDP","sm")} ${bdg("AI-IRODP","sm")}
+        <span style="font-size:0.65rem;font-family:'JetBrains Mono',monospace;color:var(--text-muted);margin-left:4px">I\u00b7dea R\u00b7esearch O\u00b7rganise D\u00b7raft P\u00b7olish</span>
+      </div>
+    </div>`;
+  }
+  h+=`<button class="btn-new" onclick="addStory()">${IC.plus} New Story</button>`;
+  if(S.stories.length){
+    h+=`<div class="mono-sm" style="margin-bottom:12px">Your stories (${S.stories.length})</div>`;
+    S.stories.forEach(st=>{
+      const sl=S.logs[st.id]||[],lb=getLabel(sl);
+      h+=`<div class="story-row" onclick="openStory('${st.id}')">
+        <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">${IC.folder}
+          <div style="min-width:0"><div style="font-family:'Instrument Serif',Georgia,serif;font-size:1.05rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(st.title)||"Untitled story"}</div>
+          <div style="font-size:0.65rem;font-family:'JetBrains Mono',monospace;color:var(--text-muted);margin-top:2px">${sl.length} log${sl.length!==1?"s":""} \u00b7 ${fmtD(st.createdAt,"short")}</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;flex-shrink:0">${dts(sl)} ${bdg(lb,"sm")}
+          <button class="btn-ghost" onclick="event.stopPropagation();delStory('${st.id}')">${IC.trash}</button>
+        </div>
+      </div>`;
+    });
+  }
+  h+=`<div class="ref"><div class="mono-sm" style="margin-bottom:14px">Label reference</div>
+    ${[["AI-0","No AI used"],["AI-R","Research only"],["AI-P","Polish / editing only"],["AI-RO","Research + organisation"],["AI-RDP","Research, drafting + polishing"],["AI-IRODP","AI across all stages"]].map(([c,d])=>`<div class="ref-row">${bdg(c,"sm")} <span style="color:var(--text-muted);font-size:0.8rem">${d}</span></div>`).join("")}
+    <p style="margin-top:14px;font-size:0.7rem;font-family:'JetBrains Mono',monospace;color:var(--text-muted);line-height:1.6">Labels are composable \u2014 any combination of I\u00b7R\u00b7O\u00b7D\u00b7P reflects your actual usage. The label builds automatically from what you log.</p>
+  </div>`;
+  return h;
+}
+
+function renderDetail(){
+  const st=S.stories.find(s=>s.id===S.active);if(!st)return"";
+  const sl=S.logs[S.active]||[],lb=getLabel(sl);
+  let h=`<button class="back" onclick="goBack()">${IC.back} All stories</button>`;
+  h+=`<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:30px">
+    <div style="flex:1;min-width:250px">
+      <input class="title-input" value="${esc(st.title)}" placeholder="What\u2019s the story?" oninput="updateField('title',this.value)">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;max-width:400px">
+        <input class="meta-input" placeholder="Your name" value="${esc(st.author||"")}" oninput="updateField('author',this.value)">
+        <input class="meta-input" placeholder="Publication" value="${esc(st.publication||"")}" oninput="updateField('publication',this.value)">
+      </div>
+    </div>
+    <div style="text-align:right">${bdg(lb,"lg")}<div style="margin-top:8px">${dts(sl)}</div></div>
+  </div>`;
+
+  h+=`<div class="mono-sm" style="margin-bottom:16px">Log your AI use as you go</div>`;
+  STAGES.forEach(stage=>{
+    const sLogs=sl.filter(l=>l.stage===stage.key),has=sLogs.length>0,isOpen=S.stage===stage.key;
+    h+=`<div class="stage-section ${has?"has-logs":"no-logs"}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+        <div><span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;font-weight:700;letter-spacing:0.08em;color:${has?"var(--accent)":"var(--text-muted)"};">[${stage.key}]</span>
+          <span style="font-family:'Instrument Serif',Georgia,serif;font-size:1.15rem;margin-left:10px">${stage.name}</span>
+          <span style="font-size:0.78rem;color:var(--text-muted);margin-left:10px;font-style:italic">${stage.desc}</span></div>
+        ${!isOpen?`<button class="btn btn-sm" onclick="openStage('${stage.key}')">${IC.plus} Used AI here</button>`:""}
+      </div>`;
+
+    sLogs.forEach(log=>{
+      h+=`<div class="log-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div><span class="log-tool">${esc(log.tool)}${log.otherTool?": "+esc(log.otherTool):""}</span>
+          <span style="color:var(--text-muted)">${esc(log.usageType)}${log.otherUsage?" \u2014 "+esc(log.otherUsage):""}</span></div>
+        <button class="btn-ghost" onclick="delLog('${log.id}')">${IC.trash}</button></div>
+        ${log.promptSummary?`<div style="margin-top:8px;line-height:1.5;font-size:0.78rem;background:var(--bg);padding:8px 10px;border-radius:3px;border:1px solid var(--border);font-family:'JetBrains Mono',monospace;white-space:pre-wrap;word-break:break-word"><span style="color:var(--text-muted);font-size:0.65rem">PROMPT:</span>\n${esc(log.promptSummary)}</div>`:""}
+        ${log.notes?`<div style="margin-top:6px;line-height:1.5"><span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text-muted)">WHY: </span>${esc(log.notes)}</div>`:""}
+        <div style="margin-top:6px;font-size:0.65rem;font-family:'JetBrains Mono',monospace;color:var(--text-muted);opacity:0.6">${fmtD(log.timestamp,"log")}</div>
+      </div>`;
+    });
+
+    if(isOpen){
+      h+=`<div class="log-form">
+        <div style="margin-bottom:16px"><label class="form-label">What tool did you use?</label>
+          <div class="chip-grid" id="tool-chips">${TOOLS.map(t=>`<button class="chip" data-val="${t}" onclick="pickChip('tool-chips',this)">${t}</button>`).join("")}</div>
+          <input class="input" id="other-tool" placeholder="Which tool?" style="margin-top:8px;display:none">
+        </div>
+        <div style="margin-bottom:16px"><label class="form-label">What did you use it for?</label>
+          <div class="chip-grid" id="usage-chips">${USAGES.map(u=>`<button class="chip" data-val="${u}" onclick="pickChip('usage-chips',this)">${u}</button>`).join("")}</div>
+          <input class="input" id="other-usage" placeholder="Tell us more..." style="margin-top:8px;display:none">
+        </div>
+        <div style="margin-bottom:16px"><label class="form-label">Paste your main prompt <span style="font-weight:400;text-transform:none;letter-spacing:0">(if you can)</span></label>
+          <p class="form-hint">Copy-paste what you actually typed into the AI. Don\u2019t worry about tidying it up.</p>
+          <textarea class="textarea" id="log-prompt" placeholder="Paste your prompt here..."></textarea>
+        </div>
+        <div style="margin-bottom:16px"><label class="form-label">What were you trying to do? <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+          <p class="form-hint">What was the goal? What did you end up doing with the output?</p>
+          <textarea class="textarea" id="log-notes" placeholder="e.g. I wanted to quickly check if this story had already been covered, then I verified the results myself..." style="min-height:60px"></textarea>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button class="btn btn-secondary" onclick="closeStage()">Cancel</button>
+          <button class="btn btn-primary" onclick="saveLog('${stage.key}')">Save</button>
+        </div>
+      </div>`;
+    }
+    h+=`</div>`;
+  });
+
+  h+=`<div style="border-top:1px solid var(--border);padding-top:24px;display:flex;gap:10px;flex-wrap:wrap">
+    <button class="btn btn-primary ${S.showAssess?"on":""}" onclick="toggleAssess()">${S.showAssess?"Hide":"Start"} self-assessment</button>
+    <button class="btn btn-secondary" onclick="exportJSON()">${IC.dl} Export data</button>
+  </div>`;
+
+  if(S.showAssess){
+    const assess=st.assessment||{};
+    h+=`<div style="margin-top:24px;animation:slideIn 0.2s ease">
+      <div class="mono-sm" style="margin-bottom:8px">How would you describe your AI use?</div>
+      <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:16px;font-style:italic">For each stage, pick the description that feels closest to what you actually did. It\u2019s completely fine to pick different levels for different stages \u2014 most people do.</p>`;
+
+    h+=`<div class="assess-grid"><div class="assess-cell col-header"></div>${LEVELS.map(l=>`<div class="assess-cell col-header">${l.name}</div>`).join("")}`;
+    STAGES.forEach((stage,si)=>{
+      const isLast=si===STAGES.length-1;
+      h+=`<div class="assess-cell row-label ${isLast?"last-row":""}">${stage.name}</div>`;
+      LEVELS.forEach((level,li)=>{
+        const checked=assess[stage.key]===level.key?"checked":"";
+        h+=`<div class="assess-cell ${isLast?"last-row":""}" title="${LDESC[stage.key][li]}"><input type="radio" class="assess-radio" name="assess-${stage.key}" value="${level.key}" ${checked} onchange="setAssess('${stage.key}','${level.key}')" title="${LDESC[stage.key][li]}"></div>`;
+      });
+    });
+    h+=`</div>`;
+
+    h+=`<div class="assess-mobile">`;
+    STAGES.forEach(stage=>{
+      h+=`<div class="assess-mobile-stage"><div class="stage-label">${stage.name} <span style="font-weight:400;font-size:0.8rem;color:var(--text-muted)">\u2014 ${stage.desc}</span></div>`;
+      LEVELS.forEach((level,li)=>{
+        const checked=assess[stage.key]===level.key?"checked":"";
+        h+=`<label class="assess-mobile-option"><input type="radio" class="assess-radio" name="assess-m-${stage.key}" value="${level.key}" ${checked} onchange="setAssess('${stage.key}','${level.key}')"><span><strong>${level.name}</strong> \u2014 ${LDESC[stage.key][li]}</span></label>`;
+      });
+      h+=`</div>`;
+    });
+    h+=`</div>`;
+
+    h+=`<div style="margin-top:16px"><label class="form-label">Any thoughts on how AI helped you \u2014 or led you astray? <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+      <textarea class="textarea" id="reflections" placeholder="Anything you want to share about your experience using AI on this story..." style="min-height:80px" oninput="updateField('reflections',this.value)">${esc(st.reflections||"")}</textarea>
+    </div>`;
+
+    h+=`<div style="margin-top:20px"><button class="btn btn-primary" onclick="toggleDisc()" style="width:100%;justify-content:center;padding:14px 20px;font-size:0.8rem">${S.showDisc?"Hide":"Generate"} transparency declaration</button></div></div>`;
+  }
+
+  if(S.showDisc){
+    const disc=getDisclosure(st,sl);
+    h+=`<div class="disclosure"><div class="disclosure-head"><span class="mono-sm" style="color:var(--light)">AI Transparency Declaration</span>
+      <button class="btn-copy" onclick="copyDisc()">${IC.copy} <span id="cp-label">Copy</span></button></div>
+      <pre class="disclosure-body">${esc(disc)}</pre></div>`;
+  }
+  return h;
+}
+
+function render(){
+  const app=document.getElementById("app");
+  let h=`<header class="masthead"><div><h1>AI Transparency Tracker</h1><div class="tagline">Document \u00b7 Disclose \u00b7 Declare</div></div>${!S.active?'<div class="version">v0.2</div>':""}</header>`;
+  h+=S.active?renderDetail():renderList();
+  h+=`<footer class="footer"><div>AI Transparency Tracker v0.2 \u00a9 2026 Tito Ambyo and Janak Rogers, RMIT University</div><div>Code: <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener">GNU GPL v3</a> \u00b7 Label system (I\u00b7R\u00b7O\u00b7D\u00b7P): <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a></div></footer>`;
+  app.innerHTML=h;
+}
+
+function addStory(){
+  const st={id:gid(),title:"",author:"",publication:"",reflections:"",assessment:{},createdAt:new Date().toISOString()};
+  S.stories.unshift(st);S.logs[st.id]=[];S.active=st.id;S.stage=null;S.showDisc=false;S.showAssess=false;
+  save();render();setTimeout(()=>{const el=document.querySelector(".title-input");if(el)el.focus()},50);
+}
+function openStory(sid){S.active=sid;S.stage=null;S.showDisc=false;S.showAssess=false;render()}
+function goBack(){S.active=null;S.stage=null;S.showDisc=false;S.showAssess=false;render()}
+function delStory(sid){if(!confirm("Delete this story and all its logs?"))return;S.stories=S.stories.filter(s=>s.id!==sid);delete S.logs[sid];if(S.active===sid)S.active=null;save();render()}
+function updateField(f,v){const st=S.stories.find(s=>s.id===S.active);if(st){st[f]=v;save()}}
+function openStage(k){S.stage=k;render()}
+function closeStage(){S.stage=null;render()}
+
+function pickChip(gridId,btn){
+  document.getElementById(gridId).querySelectorAll(".chip").forEach(c=>c.classList.remove("selected"));
+  btn.classList.add("selected");
+  const v=btn.dataset.val;
+  if(gridId==="tool-chips")document.getElementById("other-tool").style.display=v==="Other"?"block":"none";
+  if(gridId==="usage-chips")document.getElementById("other-usage").style.display=v==="Other"?"block":"none";
+}
+
+function saveLog(stageKey){
+  const toolEl=document.querySelector("#tool-chips .chip.selected");
+  const usageEl=document.querySelector("#usage-chips .chip.selected");
+  if(!toolEl||!usageEl){alert("Please pick a tool and what you used it for.");return}
+  const rawTool=toolEl.dataset.val,rawUsage=usageEl.dataset.val;
+  const log={
+    id:gid(),stage:stageKey,
+    tool:rawTool,otherTool:rawTool==="Other"?document.getElementById("other-tool").value:"",
+    usageType:rawUsage,otherUsage:rawUsage==="Other"?document.getElementById("other-usage").value:"",
+    promptSummary:document.getElementById("log-prompt").value,
+    notes:document.getElementById("log-notes").value,
+    timestamp:new Date().toISOString()
+  };
+  if(!S.logs[S.active])S.logs[S.active]=[];
+  S.logs[S.active].push(log);S.stage=null;save();render();
+}
+function delLog(logId){if(!S.active)return;S.logs[S.active]=(S.logs[S.active]||[]).filter(l=>l.id!==logId);save();render()}
+function toggleAssess(){S.showAssess=!S.showAssess;if(!S.showAssess)S.showDisc=false;render()}
+function toggleDisc(){S.showDisc=!S.showDisc;render()}
+function setAssess(sk,lv){const st=S.stories.find(s=>s.id===S.active);if(!st)return;if(!st.assessment)st.assessment={};st.assessment[sk]=lv;save()}
+
+function copyDisc(){
+  const st=S.stories.find(s=>s.id===S.active);if(!st)return;
+  navigator.clipboard.writeText(getDisclosure(st,S.logs[S.active]||[])).then(()=>{
+    const el=document.getElementById("cp-label");if(el){el.textContent="Copied!";setTimeout(()=>{if(el)el.textContent="Copy"},2000)}
+  });
+}
+
+function exportJSON(){
+  const st=S.stories.find(s=>s.id===S.active);if(!st)return;
+  const sl=S.logs[S.active]||[];
+  const data={story:st,logs:sl,label:getLabel(sl),disclosure:getDisclosure(st,sl),exportedAt:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);const a=document.createElement("a");
+  a.href=url;a.download=`${(st.title||"story").replace(/\s+/g,"-").toLowerCase()||"untitled"}-ai-log.json`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+
+load();render();
+</script>
+</body>
+</html>
