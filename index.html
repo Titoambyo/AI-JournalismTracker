@@ -157,7 +157,7 @@
 <body>
 <div class="app" id="app"></div>
 <script>
-const STAGES=[{key:"I",name:"Idea",desc:"Finding something to report on"},{key:"R",name:"Research",desc:"Finding out stuff"},{key:"O",name:"Organise",desc:"Finding shape, focus, and gaps"},{key:"D",name:"Draft",desc:"Getting the story down"},{key:"P",name:"Polish",desc:"Revising and rewriting"}];
+const STAGES=[{key:"I",name:"Idea",desc:"Finding something to report on",narr:"ideation"},{key:"R",name:"Research",desc:"Finding out stuff",narr:"research"},{key:"O",name:"Organise",desc:"Finding shape, focus, and gaps",narr:"organising"},{key:"D",name:"Draft",desc:"Getting the story down",narr:"drafting"},{key:"P",name:"Polish",desc:"Revising and rewriting",narr:"polishing"}];
 const TOOLS=["ChatGPT","Claude","Gemini","Copilot","Perplexity","NotebookLM","Grammarly AI","Whisper / Transcription","Midjourney","DALL-E","Other"];
 const USAGES=["Brainstorming","Background research","Summarising sources","Data analysis","Transcription","Translation","Drafting text","Rewriting","Editing / grammar","Headlines / titles","Structuring / outlining","Fact-checking help","Source finding","Image generation","Other"];
 const LEVELS=[{key:"ai-led",name:"AI-led"},{key:"high",name:"High use"},{key:"moderate",name:"Moderate"},{key:"light",name:"Light use"},{key:"none",name:"No AI"}];
@@ -190,42 +190,38 @@ const IC={
 };
 
 function getDisclosure(story,logs){
-  if(!logs||!logs.length)return"No AI tools were used in the production of this story.\n\nThis declaration was generated using the AI Transparency Tracker: https://titoambyo.github.io/AI-JournalismTracker/";
+  if(!logs||!logs.length)return"No AI tools were used in the production of this story.\n\nThis declaration was generated using the AI Transparency Tracker:\nhttps://titoambyo.github.io/AI-JournalismTracker/";
   const label=getLabel(logs),groups={};
   logs.forEach(l=>{if(!groups[l.stage])groups[l.stage]=[];groups[l.stage].push(l)});
   const toolSet=new Set();logs.forEach(l=>toolSet.add(l.tool==="Other"&&l.otherTool?l.otherTool:l.tool));
   const toolList=Array.from(toolSet);
   const stagesUsed=STAGES.filter(s=>groups[s.key]);
-  const stageNames=stagesUsed.map(s=>s.name.toLowerCase());
+  const stageNames=stagesUsed.map(s=>s.narr);
 
-  // Build clean narrative — just what was used where
   let narr=`The author used AI tools during the ${joinL(stageNames)} ${stageNames.length===1?"stage":"stages"} of producing this story.`;
   stagesUsed.forEach(stage=>{
     const sLogs=groups[stage.key];
     const usages=[...new Set(sLogs.map(l=>{const t=l.usageType==="Other"&&l.otherUsage?l.otherUsage:l.usageType;return t.toLowerCase().replace(/ \/ /g," and ")}))];
-    narr+=` During ${stage.name.toLowerCase()}, AI was used for ${joinL(usages)}.`;
+    narr+=` During ${stage.narr}, AI was used for ${joinL(usages)}.`;
   });
   narr+=` All AI-generated outputs were reviewed and verified by the author.`;
 
-  // Tools summary inline
   const toolParts=toolList.map(tool=>{
-    const ts=[];STAGES.forEach(s=>{if(groups[s.key]&&groups[s.key].some(l=>(l.tool==="Other"&&l.otherTool?l.otherTool:l.tool)===tool))ts.push(s.name.toLowerCase())});
+    const ts=[];STAGES.forEach(s=>{if(groups[s.key]&&groups[s.key].some(l=>(l.tool==="Other"&&l.otherTool?l.otherTool:l.tool)===tool))ts.push(s.narr)});
     return `${tool} (${joinL(ts)})`;
   });
   narr+=` Tools used: ${joinL(toolParts)}.`;
 
-  // Assemble
-  let d=`AI TRANSPARENCY DECLARATION [${label}]\n`;
-  if(story.title)d+=`${story.title}\n`;
+  let d=`AI TRANSPARENCY DECLARATION\n${label}\n`;
+  if(story.title)d+=`\n${story.title}\n`;
   d+=`\nHOW AI WAS USED FOR THIS STORY\n\n`;
   d+=narr;
 
-  // Optional author note
-  if(story.declNote&&story.declNote.trim()){
-    let note=story.declNote.trim();
+  if(story.reflections&&story.reflections.trim()){
+    let note=story.reflections.trim();
     note=note.charAt(0).toUpperCase()+note.slice(1);
     if(!/[.!?]$/.test(note))note+=".";
-    d+=`\n\nAUTHOR\u2019S NOTE\n\n${note}`;
+    d+=`\n\nAUTHOR\u2019S NOTES\n\n${note}`;
   }
 
   d+=`\n\nThis declaration was generated using the AI Transparency Tracker:\nhttps://titoambyo.github.io/AI-JournalismTracker/`;
@@ -364,13 +360,9 @@ function renderDetail(){
     });
     h+=`</div>`;
 
-    h+=`<div style="margin-top:16px"><label class="form-label">Any thoughts on how AI helped you \u2014 or led you astray? <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
-      <textarea class="textarea" id="reflections" placeholder="Anything you want to share about your experience using AI on this story..." style="min-height:80px" oninput="updateField('reflections',this.value)">${esc(st.reflections||"")}</textarea>
-    </div>`;
-
-    h+=`<div style="margin-top:16px"><label class="form-label">Anything you\u2019d like to add to the declaration? <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
-      <p class="form-hint">This will appear as an author\u2019s note in the published declaration. Use it to add context about your AI use that the log doesn\u2019t capture.</p>
-      <textarea class="textarea" id="decl-note" placeholder="e.g. AI was used to help structure this piece under a tight deadline, but all reporting and interviews were conducted independently..." style="min-height:60px" oninput="updateField('declNote',this.value)">${esc(st.declNote||"")}</textarea>
+    h+=`<div style="margin-top:16px"><label class="form-label">Write your notes on your usage of AI <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+      <p class="form-hint">These notes will be published together with the declaration as an author\u2019s note.</p>
+      <textarea class="textarea" id="reflections" placeholder="e.g. AI was used to help structure this piece under a tight deadline, but all reporting and interviews were conducted independently..." style="min-height:80px" oninput="updateField('reflections',this.value)">${esc(st.reflections||"")}</textarea>
     </div>`;
 
     h+=`<div style="margin-top:20px"><button class="btn btn-primary" onclick="toggleDisc()" style="width:100%;justify-content:center;padding:14px 20px;font-size:0.8rem">${S.showDisc?"Hide":"Generate"} transparency declaration</button></div></div>`;
@@ -378,8 +370,17 @@ function renderDetail(){
 
   if(S.showDisc){
     const disc=getDisclosure(st,sl);
-    h+=`<div class="disclosure"><div class="disclosure-head"><span class="mono-sm" style="color:var(--light)">AI Transparency Declaration</span>
-      <button class="btn-copy" onclick="copyDisc()">${IC.copy} <span id="cp-label">Copy</span></button></div>
+    const dlabel=getLabel(sl);
+    const isZero=dlabel==="AI-0";
+    const labelColor=isZero?"#2d6a4f":"#c1121f";
+    const labelBg=isZero?"#d8f3dc":"#fff0f0";
+    h+=`<div class="disclosure">
+      <div style="padding:20px;text-align:center;border-bottom:1px solid var(--border);background:var(--bg)">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted);margin-bottom:10px">AI Transparency Label</div>
+        <div style="display:inline-block;font-family:'JetBrains Mono',monospace;font-size:2rem;font-weight:700;letter-spacing:0.15em;padding:14px 28px;border-radius:6px;border:3px solid ${labelColor};background:${labelBg};color:${labelColor}">${esc(dlabel)}</div>
+      </div>
+      <div class="disclosure-head"><span class="mono-sm" style="color:var(--light)">Declaration text</span>
+        <button class="btn-copy" onclick="copyDisc()">${IC.copy} <span id="cp-label">Copy</span></button></div>
       <pre class="disclosure-body">${esc(disc)}</pre></div>`;
   }
   return h;
