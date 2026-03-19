@@ -190,41 +190,45 @@ const IC={
 };
 
 function getDisclosure(story,logs){
-  if(!logs||!logs.length)return"No AI tools were used in the production of this story.";
+  if(!logs||!logs.length)return"No AI tools were used in the production of this story.\n\nThis declaration was generated using the AI Transparency Tracker: https://titoambyo.github.io/AI-JournalismTracker/";
   const label=getLabel(logs),groups={};
   logs.forEach(l=>{if(!groups[l.stage])groups[l.stage]=[];groups[l.stage].push(l)});
   const toolSet=new Set();logs.forEach(l=>toolSet.add(l.tool==="Other"&&l.otherTool?l.otherTool:l.tool));
   const toolList=Array.from(toolSet);
   const stagesUsed=STAGES.filter(s=>groups[s.key]);
   const stageNames=stagesUsed.map(s=>s.name.toLowerCase());
-  const author="The author";
-  let narr=`${author} used AI tools during the ${joinL(stageNames)} ${stageNames.length===1?"stage":"stages"} of producing this story.`;
+
+  // Build clean narrative — just what was used where
+  let narr=`The author used AI tools during the ${joinL(stageNames)} ${stageNames.length===1?"stage":"stages"} of producing this story.`;
   stagesUsed.forEach(stage=>{
     const sLogs=groups[stage.key];
     const usages=[...new Set(sLogs.map(l=>{const t=l.usageType==="Other"&&l.otherUsage?l.otherUsage:l.usageType;return t.toLowerCase().replace(/ \/ /g," and ")}))];
-    const intents=sLogs.map(l=>l.notes).filter(n=>n&&n.trim());
     narr+=` During ${stage.name.toLowerCase()}, AI was used for ${joinL(usages)}.`;
-    intents.forEach(i=>{let c=i.trim();c=c.charAt(0).toUpperCase()+c.slice(1);if(!/[.!?]$/.test(c))c+=".";narr+=` ${c}`;});
   });
-  const assess=story.assessment;
-  if(assess){
-    const aStages=STAGES.filter(s=>assess[s.key]&&assess[s.key]!=="none");
-    if(aStages.length>0){
-      narr+=`\n\nIn the author\u2019s own assessment: `;
-      const parts=aStages.map(s=>{const li=LEVELS.findIndex(l=>l.key===assess[s.key]);const desc=LDESC[s.key][li];return desc.charAt(0).toLowerCase()+desc.slice(1)});
-      narr+=joinL(parts)+".";
-    }
+  narr+=` All AI-generated outputs were reviewed and verified by the author.`;
+
+  // Tools summary inline
+  const toolParts=toolList.map(tool=>{
+    const ts=[];STAGES.forEach(s=>{if(groups[s.key]&&groups[s.key].some(l=>(l.tool==="Other"&&l.otherTool?l.otherTool:l.tool)===tool))ts.push(s.name.toLowerCase())});
+    return `${tool} (${joinL(ts)})`;
+  });
+  narr+=` Tools used: ${joinL(toolParts)}.`;
+
+  // Assemble
+  let d=`AI TRANSPARENCY DECLARATION [${label}]\n`;
+  if(story.title)d+=`${story.title}\n`;
+  d+=`\nHOW AI WAS USED FOR THIS STORY\n\n`;
+  d+=narr;
+
+  // Optional author note
+  if(story.declNote&&story.declNote.trim()){
+    let note=story.declNote.trim();
+    note=note.charAt(0).toUpperCase()+note.slice(1);
+    if(!/[.!?]$/.test(note))note+=".";
+    d+=`\n\nAUTHOR\u2019S NOTE\n\n${note}`;
   }
-  narr+=`\n\nAll AI-generated outputs were reviewed and verified by the author. Human editorial judgement was applied throughout.`;
-  let d=`AI TRANSPARENCY DECLARATION [${label}]\n`+"\u2500".repeat(40)+"\n\n";
-  if(story.title)d+=story.title+"\n";
-  if(story.publication)d+=story.publication+"\n";
-  d+=fmtD(new Date().toISOString(),"full")+"\n\nHOW AI WAS USED\n\n"+narr+"\n\nTOOLS USED\n\n";
-  toolList.forEach(tool=>{
-    const ts=[];STAGES.forEach(s=>{if(groups[s.key]&&groups[s.key].some(l=>(l.tool==="Other"&&l.otherTool?l.otherTool:l.tool)===tool))ts.push(s.name)});
-    d+=`  \u2022 ${tool} \u2014 used in: ${joinL(ts)}\n`;
-  });
-  if(story.reflections&&story.reflections.trim())d+=`\nAUTHOR\u2019S REFLECTION\n\n${story.reflections.trim()}\n`;
+
+  d+=`\n\nThis declaration was generated using the AI Transparency Tracker:\nhttps://titoambyo.github.io/AI-JournalismTracker/`;
   return d;
 }
 
@@ -364,6 +368,11 @@ function renderDetail(){
       <textarea class="textarea" id="reflections" placeholder="Anything you want to share about your experience using AI on this story..." style="min-height:80px" oninput="updateField('reflections',this.value)">${esc(st.reflections||"")}</textarea>
     </div>`;
 
+    h+=`<div style="margin-top:16px"><label class="form-label">Anything you\u2019d like to add to the declaration? <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+      <p class="form-hint">This will appear as an author\u2019s note in the published declaration. Use it to add context about your AI use that the log doesn\u2019t capture.</p>
+      <textarea class="textarea" id="decl-note" placeholder="e.g. AI was used to help structure this piece under a tight deadline, but all reporting and interviews were conducted independently..." style="min-height:60px" oninput="updateField('declNote',this.value)">${esc(st.declNote||"")}</textarea>
+    </div>`;
+
     h+=`<div style="margin-top:20px"><button class="btn btn-primary" onclick="toggleDisc()" style="width:100%;justify-content:center;padding:14px 20px;font-size:0.8rem">${S.showDisc?"Hide":"Generate"} transparency declaration</button></div></div>`;
   }
 
@@ -385,7 +394,7 @@ function render(){
 }
 
 function addStory(){
-  const st={id:gid(),title:"",author:"",publication:"",reflections:"",assessment:{},createdAt:new Date().toISOString()};
+  const st={id:gid(),title:"",author:"",publication:"",reflections:"",declNote:"",assessment:{},createdAt:new Date().toISOString()};
   S.stories.unshift(st);S.logs[st.id]=[];S.active=st.id;S.stage=null;S.showDisc=false;S.showAssess=false;
   save();render();setTimeout(()=>{const el=document.querySelector(".title-input");if(el)el.focus()},50);
 }
