@@ -150,8 +150,8 @@ const LDESC={
 };
 
 let S={stories:[],logs:{},active:null,stage:null,showDisc:false,showAssess:false,showExportInfo:false};
-function load(){try{const a=localStorage.getItem("ait4-stories"),b=localStorage.getItem("ait4-logs");if(a)S.stories=JSON.parse(a);if(b)S.logs=JSON.parse(b)}catch(e){}}
-function save(){try{localStorage.setItem("ait4-stories",JSON.stringify(S.stories));localStorage.setItem("ait4-logs",JSON.stringify(S.logs))}catch(e){}}
+function load(){try{const a=localStorage.getItem("ait-stories"),b=localStorage.getItem("ait-logs");if(a)S.stories=JSON.parse(a);if(b)S.logs=JSON.parse(b)}catch(e){}}
+function save(){try{localStorage.setItem("ait-stories",JSON.stringify(S.stories));localStorage.setItem("ait-logs",JSON.stringify(S.logs))}catch(e){}}
 function gid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function esc(s){const d=document.createElement("div");d.textContent=s||"";return d.innerHTML}
 function fmtD(iso,f){const d=new Date(iso);if(f==="short")return d.toLocaleDateString("en-AU",{day:"numeric",month:"short"});if(f==="log")return d.toLocaleString("en-AU",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});if(f==="full")return d.toLocaleDateString("en-AU",{day:"numeric",month:"long",year:"numeric"});return d.toLocaleDateString("en-AU")}
